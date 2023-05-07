@@ -12,7 +12,7 @@ import git
 import numpy as np
 import torch
 import torch.distributed as dist
-# from rouge_score import rouge_scorer, scoring
+from rouge_score import rouge_scorer, scoring
 from sacrebleu import corpus_bleu
 from torch import nn
 from torch.utils.data import Dataset, Sampler
