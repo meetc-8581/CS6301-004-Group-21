@@ -1,0 +1,9 @@
+python_version==3.8.10
+fire
+transformers==4.1.0
+sentencepiece 
+pytorch-lightning==1.0.4
+datasets
+rouge_score
+sacrebleu
+protobuf==3.20.*

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 import argparse
 import json
 import glob
@@ -9,7 +10,7 @@ import sys
 import warnings
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Callable,  Iterable
 import pytorch_lightning as pl
 import torch
 from torch import nn
@@ -59,13 +60,11 @@ from utils import (
     assert_all_frozen,
     calculate_rouge,
     flatten_list,
-    freeze_embeds,
-    freeze_params,
-    label_smoothed_nll_loss,
-    lmap,
-    pickle_save,
-    use_task_specific_params,
+
 )
+
+
+
 
 
 args = {
@@ -129,9 +128,9 @@ args = {
     "min_epochs": 1,
     "min_steps": None,
     "model_name_or_path": "google/pegasus-cnn_dailymail",
-    "n_test": 50,
-    "n_train": 10000,
-    "n_val": 50,
+    "n_test": 1,
+    "n_train": 10,
+    "n_val": 1,
     "no_teacher": True,
     "normalize_hidden": False,
     "num_nodes": 1,
@@ -226,9 +225,6 @@ class BaseTransformer(pl.LightningModule):
     ):
         """Initialize a model, tokenizer and config."""
         super().__init__()
-        # TODO: move to self.save_hyperparameters()
-        # self.save_hyperparameters()
-        # can also expand arguments into trainer signature for easier reading
 
         self.save_hyperparameters(hparams)
         self.step_count = 0
@@ -365,79 +361,8 @@ class BaseTransformer(pl.LightningModule):
         self.model.save_pretrained(save_path)
         self.tokenizer.save_pretrained(save_path)
 
-    # @staticmethod
-    # def add_model_specific_args(parser, root_dir):
-    #     parser.add_argument(
-    #         "--model_name_or_path",
-    #         default="google/pegasus-cnn_dailymail",
-    #         type=str,
-    #         required=False,
-    #         help="Path to pretrained model or model identifier from huggingface.co/models",
-    #     )
-    #     parser.add_argument(
-    #         "--config_name", default="", type=str, help="Pretrained config name or path if not the same as model_name"
-    #     )
-    #     parser.add_argument(
-    #         "--tokenizer_name",
-    #         default=None,
-    #         type=str,
-    #         help="Pretrained tokenizer name or path if not the same as model_name",
-    #     )
-    #     parser.add_argument(
-    #         "--cache_dir",
-    #         default="",
-    #         type=str,
-    #         help="Where do you want to store the pre-trained models downloaded from huggingface.co",
-    #     )
-    #     parser.add_argument(
-    #         "--encoder_layerdrop",
-    #         type=float,
-    #         help="Encoder layer dropout probability (Optional). Goes into model.config",
-    #     )
-    #     parser.add_argument(
-    #         "--decoder_layerdrop",
-    #         type=float,
-    #         help="Decoder layer dropout probability (Optional). Goes into model.config",
-    #     )
-    #     parser.add_argument(
-    #         "--dropout",
-    #         type=float,
-    #         help="Dropout probability (Optional). Goes into model.config",
-    #     )
-    #     parser.add_argument(
-    #         "--attention_dropout",
-    #         type=float,
-    #         help="Attention dropout probability (Optional). Goes into model.config",
-    #     )
-    #     parser.add_argument("--learning_rate", default=5e-5,
-    #                         type=float, help="The initial learning rate for Adam.")
-    #     parser.add_argument(
-    #         "--lr_scheduler",
-    #         default="linear",
-    #         choices=arg_to_scheduler_choices,
-    #         metavar=arg_to_scheduler_metavar,
-    #         type=str,
-    #         help="Learning rate scheduler",
-    #     )
-    #     parser.add_argument("--weight_decay", default=0.0,
-    #                         type=float, help="Weight decay if we apply some.")
-    #     parser.add_argument("--adam_epsilon", default=1e-8,
-    #                         type=float, help="Epsilon for Adam optimizer.")
-    #     parser.add_argument("--warmup_steps", default=0,
-    #                         type=int, help="Linear warmup over warmup_steps.")
-    #     parser.add_argument("--num_workers", default=4,
-    #                         type=int, help="kwarg passed to DataLoader")
-    #     parser.add_argument("--num_train_epochs",
-    #                         dest="max_epochs", default=3, type=int)
-    #     parser.add_argument("--train_batch_size", default=32, type=int)
-    #     parser.add_argument("--eval_batch_size", default=32, type=int)
-    #     parser.add_argument("--adafactor", action="store_true")
 
-
-# need the parent dir module
 sys.path.insert(2, str(Path(__file__).resolve().parents[1]))
-
-# logger = logging.getLogger(__name__)
 
 
 class SummarizationModule(BaseTransformer):
@@ -695,7 +620,28 @@ class SummarizationModule(BaseTransformer):
 #  -=--------------------------------------------------Fine tune ends here ----------------------------------------------------
 
 
-# Util starts here
+def lmap(f: Callable, x: Iterable) -> List:
+    """list(map(f, x))"""
+    return list(map(f, x))
+
+
+def freeze_embeds(model):
+    """Freeze token embeddings and positional embeddings for bart, just token embeddings for t5."""
+    model_type = model.config.model_type
+
+    if model_type == "t5":
+        freeze_params(model.shared)
+        for d in [model.encoder, model.decoder]:
+            freeze_params(d.embed_tokens)
+    elif model_type == "fsmt":
+        for d in [model.model.encoder, model.model.decoder]:
+            freeze_params(d.embed_positions)
+            freeze_params(d.embed_tokens)
+    else:
+        freeze_params(model.model.shared)
+        for d in [model.model.encoder, model.model.decoder]:
+            freeze_params(d.embed_positions)
+            freeze_params(d.embed_tokens)
 
 
 def freeze_params(model: nn.Module):
