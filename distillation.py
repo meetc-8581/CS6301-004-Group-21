@@ -64,9 +64,6 @@ from utils import (
 )
 
 
-
-
-
 args = {
     "accelerator": None,
     "accumulate_grad_batches": 32,
@@ -88,7 +85,7 @@ args = {
     "check_val_every_n_epoch": 1,
     "checkpoint_callback": True,
     "config_name": "",
-    "data_dir": "/content/drive/MyDrive/Project",
+    "data_dir": "Data",
     "decoder_layerdrop": None,
     "default_root_dir": None,
     "deterministic": False,
@@ -107,7 +104,7 @@ args = {
     "fp16_opt_level": "O2",
     "freeze_embeds": True,
     "freeze_encoder": True,
-    "gpus": 1,
+    "gpus": 0,
     "gradient_clip_val": 0,
     "label_smoothing": 0.0,
     "learning_rate": 5.0e-05,
