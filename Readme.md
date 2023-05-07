@@ -29,16 +29,16 @@ Step 2 - Run this
 
 Step 3 - Install Dependencies by running this
 
-!pip install fire
-! pip install transformers==4.1.0
-!pip install sentencepiece 
-!pip install pytorch-lightning==1.0.4
-! pip install datasets
-! pip install rouge_score
-! pip install GitPython
-! pip install rouge_score
-! pip install sacrebleu
-! pip install protobuf==3.20.*
+!pip install fire <br>
+! pip install transformers==4.1.0 <br>
+!pip install sentencepiece <br>
+!pip install pytorch-lightning==1.0.4 <br>
+! pip install datasets <br>
+! pip install rouge_score <br>
+! pip install GitPython <br>
+! pip install rouge_score <br>
+! pip install sacrebleu <br>
+! pip install protobuf==3.20.* <br>
 
 
 Step 4 - Change the data_dir variable to give path of you files.
